@@ -1,0 +1,20 @@
+Source: r-cran-spatial
+Section: gnu-r
+Priority: optional
+Maintainer: Dirk Eddelbuettel <edd@debian.org>
+Build-Depends: debhelper-compat (= 11), r-base-dev (>= 4.1.1), dh-r
+Standards-Version: 4.5.1
+Vcs-Browser: https://salsa.debian.org/edd/r-cran-spatial
+Vcs-Git: https://salsa.debian.org/edd/r-cran-spatial.git
+Homepage: https://cran.r-project.org/package=spatial
+
+Package: r-cran-spatial
+Architecture: any
+Replaces: r-cran-vr (<< 7.3-0)
+Depends: ${R:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Description: GNU R package for spatial statistics
+ The spatial package provides functions and datasets to support
+ chapter 15 on 'Spatial Statistic' in the book 'Modern Applied
+ Statistics with S' (4th edition) by W.N. Venables and
+ B.D. Ripley. The following URL provides more details about the book:
+ URL: http://www.stats.ox.ac.uk/pub/MASS4
