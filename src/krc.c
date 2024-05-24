@@ -1,5 +1,5 @@
 /*
- *  spatial/src/krc.c by W. N. Venables and B. D. Ripley  Copyright (C) 1994-2016
+ *  spatial/src/krc.c by W. N. Venables and B. D. Ripley  Copyright (C) 1994-2022
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,29 +29,29 @@
 /* defines  gls ls fmat frset alset valn pred prvar correlogram variogram */
 
 static void dscale(double, double, double *, double *);
-static void cholcov(double *, double *, double *, int, Sint *);
+static void cholcov(double *, double *, double *, int, int *);
 static void householder(double *, double *, double *, double *,
-			int, int, Sint *);
-static void chols(int, double *, double *, Sint *);
+			int, int, int *);
+static void chols(int, double *, double *, int *);
 static void solv(double *, double *, int, double *, double *);
 static void fsolv(double *, double *, int, double *);
 static void bsolv(double *, double *, int, double *);
 static void house_rhs(double *, double *, double *, int, int,
 		      double *, double *);
-static double val(double, double, double *, Sint *);
+static double val(double, double, double *, int *);
 
 static double *alph1 = NULL;
 static double xl1, xu1, yl1, yu1;
 
 void
-VR_alset(Sfloat *alph, Sint *nalph)
+VR_alset(double *alph, int *nalph)
 {
     int   i;
 
     if (alph1 != NULL)
-	alph1 = Realloc(alph1, *nalph, double);
+	alph1 = R_Realloc(alph1, *nalph, double);
     else
-	alph1 = Calloc(*nalph, double);
+	alph1 = R_Calloc(*nalph, double);
     for (i = 0; i < *nalph; ++i)
 	alph1[i] = alph[i];
 }
@@ -88,13 +88,13 @@ cov(int n, double *d, int pred)
 }
 
 void
-VR_gls(double *x, double *y, double *z, Sint *n, Sint *np,
-       Sint *npar, double *f, double *l, double *r, double *bz,
-       double *wz, double *yy, double *w, Sint *ifail, double *l1f)
+VR_gls(double *x, double *y, double *z, int *n, int *np,
+       int *npar, double *f, double *l, double *r, double *bz,
+       double *wz, double *yy, double *w, int *ifail, double *l1f)
 {
     double b[28];
-    Sint  i, j;
-    Sint  i1;
+    int  i, j;
+    int  i1;
     double *w1, *w2;
     double *lf, *nu;
 
@@ -116,10 +116,10 @@ VR_gls(double *x, double *y, double *z, Sint *n, Sint *np,
    of the covariance matrix */
 
 
-    lf = Calloc(*n * *npar, double);
-    nu = Calloc(*n * *npar, double);
-    w1 = Calloc(*n, double);
-    w2 = Calloc(*n, double);
+    lf = R_Calloc(*n * *npar, double);
+    nu = R_Calloc(*n * *npar, double);
+    w1 = R_Calloc(*n, double);
+    w2 = R_Calloc(*n, double);
     cholcov(x, y, l, *n, ifail);
     if (*ifail > 0)
 	return;
@@ -146,19 +146,19 @@ VR_gls(double *x, double *y, double *z, Sint *n, Sint *np,
 	wz[i] = z[i] - val(x[i], y[i], bz, np);
     solv(yy, wz, *n, l, l);
     fsolv(w, wz, *n, l);
-    Free(lf);
-    Free(nu);
-    Free(w1);
-    Free(w2);
+    R_Free(lf);
+    R_Free(nu);
+    R_Free(w1);
+    R_Free(w2);
 }
 
 void
-VR_ls(double *x, double *y, double *z, Sint *n, Sint *np,
-      Sint *npar, double *f, double *r, double *bz, double *wz,
-      Sint *ifail)
+VR_ls(double *x, double *y, double *z, int *n, int *np,
+      int *npar, double *f, double *r, double *bz, double *wz,
+      int *ifail)
 {
     double b[28];
-    Sint  i, j, k;
+    int  i, j, k;
     double *fw, *nu;
 
 /*   Least squares estimation of parameters of spatial regression for
@@ -170,8 +170,8 @@ VR_ls(double *x, double *y, double *z, Sint *n, Sint *np,
      i.e. the decomposition of F.
      Copy F matrix to FW for use in householder */
 
-    fw = Calloc(*n * *npar, double);
-    nu = Calloc(*n * *npar, double);
+    fw = R_Calloc(*n * *npar, double);
+    nu = R_Calloc(*n * *npar, double);
     k = 0;
     for (i = 1; i <= *npar; ++i)
 	for (j = 1; j <= *n; ++j) {
@@ -184,13 +184,13 @@ VR_ls(double *x, double *y, double *z, Sint *n, Sint *np,
     house_rhs(nu, b, r, *n, *npar, z, bz);
     for (i = 0; i < *n; ++i)
 	wz[i] = z[i] - val(x[i], y[i], bz, np);
-    Free(fw);
-    Free(nu);
+    R_Free(fw);
+    R_Free(nu);
 }
 
 /* -------------------------------------------------------------------- */
 void
-VR_fmat(double *f, double *x, double *y, Sint *n, Sint *np)
+VR_fmat(double *f, double *x, double *y, int *n, int *np)
 {
     int   i, j, k, k1;
     double *xs, *ys;
@@ -198,8 +198,8 @@ VR_fmat(double *f, double *x, double *y, Sint *n, Sint *np)
 /*  FMAT evaluates the 'regression' matrix F (scaled to [-1,+1]x[-1,+1] to
     avoid excessively large or small values) */
 
-    xs = Calloc(*n, double);
-    ys = Calloc(*n, double);
+    xs = R_Calloc(*n, double);
+    ys = R_Calloc(*n, double);
     for (i = 0; i < *n; ++i)
 	dscale(x[i], y[i], &xs[i], &ys[i]);
     k1 = 0;
@@ -207,12 +207,12 @@ VR_fmat(double *f, double *x, double *y, Sint *n, Sint *np)
 	for (j = 0; j <= *np - i; ++j)
 	    for (k = 0; k < *n; ++k)
 		f[k1++] = powi(xs[k], j) * powi(ys[k], i);
-    Free(xs);
-    Free(ys);
+    R_Free(xs);
+    R_Free(ys);
 }
 
 static void
-cholcov(double *x, double *y, double *l, int n, Sint *ifail)
+cholcov(double *x, double *y, double *l, int n, int *ifail)
 {
     int   i, j;
     static double *w;
@@ -221,7 +221,7 @@ cholcov(double *x, double *y, double *l, int n, Sint *ifail)
 
 /*   Finds the Cholesky factor of the covariance matrix */
 
-    w = Calloc(n * (n + 1) / 2, double);
+    w = R_Calloc(n * (n + 1) / 2, double);
     i1 = 0;
     for (i = 0; i < n; ++i)
 	for (j = 0; j <= i; ++j) {
@@ -231,7 +231,7 @@ cholcov(double *x, double *y, double *l, int n, Sint *ifail)
 	}
     cov(n * (n + 1) / 2, w, 0);
     chols(n, w, l, ifail);
-    Free(w);
+    R_Free(w);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -239,7 +239,7 @@ cholcov(double *x, double *y, double *l, int n, Sint *ifail)
 
 static void
 householder(double *f, double *nu, double *b, double *r, int n,
-	    int m, Sint *ifail)
+	    int m, int *ifail)
 {
     int   i, j, k;
     double c1, c2;
@@ -305,7 +305,7 @@ house_rhs(double *nu, double *b, double *r, int n, int m,
     in NU and B the same operations can be performed on any rhs vector Z to
     give least squares estimates beta. */
 
-    w = Calloc(n, double);
+    w = R_Calloc(n, double);
     for (i = 0; i < n; ++i)
 	w[i] = z[i];
     for (k = 0; k < m; ++k) {
@@ -318,11 +318,11 @@ house_rhs(double *nu, double *b, double *r, int n, int m,
 	    w[i] -= sum * nu[i + k1];
     }
     bsolv(beta, w, m, r);
-    Free(w);
+    R_Free(w);
 }
 
 static void
-chols(int n, double *a, double *l, Sint *ifail)
+chols(int n, double *a, double *l, int *ifail)
 {
     double eps = 1e-9;
 
@@ -435,14 +435,14 @@ solv(double *x, double *y, int n, double *l, double *u)
 
 /*   Solves Ax = y where A = LU  */
 
-    w = Calloc(n, double);
+    w = R_Calloc(n, double);
     fsolv(w, y, n, l);
     bsolv(x, w, n, u);
-    Free(w);
+    R_Free(w);
 }
 
 void
-VR_frset(Sfloat *xl, Sfloat *xu, Sfloat *yl, Sfloat *yu)
+VR_frset(double *xl, double *xu, double *yl, double *yu)
 {
     xl1 = *xl;
     yl1 = *yl;
@@ -467,7 +467,7 @@ dscale(double xo, double yo, double *xs, double *ys)
 /*   VARIANCE/COVARIANCE,PREDICTION AND STANDARD ERROR ROUTINES */
 
 static double
-val(double xp, double yp, double *beta, Sint *np)
+val(double xp, double yp, double *beta, int *np)
 {
     int   i, j, i1;
     double xs, ys, sum;
@@ -484,7 +484,7 @@ val(double xp, double yp, double *beta, Sint *np)
 }
 
 void
-VR_valn(double *z, double *x, double *y, Sint *n, double *beta, Sint *np)
+VR_valn(double *z, double *x, double *y, int *n, double *beta, int *np)
 {
     int   i, j, i1;
     int   it;
@@ -507,7 +507,7 @@ VR_valn(double *z, double *x, double *y, Sint *n, double *beta, Sint *np)
 
 void
 VR_krpred(double *z, double *xs, double *ys, double *x, double *y,
-	  Sint *npt, Sint *n, double *yy)
+	  int *npt, int *n, double *yy)
 {
     double *d;
     int   i;
@@ -518,7 +518,7 @@ VR_krpred(double *z, double *xs, double *ys, double *x, double *y,
 
 /*   Gives value of interpolator at the point (XP,YP) */
 
-    d = Calloc(*n, double);
+    d = R_Calloc(*n, double);
     for (it = 0; it < *npt; ++it) {
 	xp = xs[it];
 	yp = ys[it];
@@ -534,13 +534,13 @@ VR_krpred(double *z, double *xs, double *ys, double *x, double *y,
 	}
 	z[it] = sum;
     }
-    Free(d);
+    R_Free(d);
 }
 
 void
-VR_prvar(double *z, double *xp, double *yp, Sint *npt,
-	 double *x, double *y, double *l, double *r, Sint *n,
-	 Sint *np, Sint *npar, double *l1f)
+VR_prvar(double *z, double *xp, double *yp, int *npt,
+	 double *x, double *y, double *l, double *r, int *n,
+	 int *np, int *npar, double *l1f)
 {
     int   i, j, k, i1, k1, it;
 
@@ -550,8 +550,8 @@ VR_prvar(double *z, double *xp, double *yp, Sint *npt,
 
 /*   Evaluates prediction variance at (XP,YP) */
 
-    w1 = Calloc(*n, double);
-    w2 = Calloc(*n, double);
+    w1 = R_Calloc(*n, double);
+    w2 = R_Calloc(*n, double);
     for (it = 0; it < *npt; ++it) {
 	for (i = 0; i < *n; ++i) {
 	    xd = x[i] - xp[it];
@@ -580,8 +580,8 @@ VR_prvar(double *z, double *xp, double *yp, Sint *npt,
 	    sum += w2[i] * w2[i];
 	z[it] = sum1 + sum;
     }
-    Free(w1);
-    Free(w2);
+    R_Free(w1);
+    R_Free(w2);
 }
 
 
@@ -589,8 +589,8 @@ VR_prvar(double *z, double *xp, double *yp, Sint *npt,
 /*  CORRELOGRAM AND VARIOGRAM ROUTINES */
 
 void
-VR_correlogram(Sfloat *xp, Sfloat *yp, Sint *nint, double *x,
-	       double *y, double *z, Sint *n, Sint *cnt)
+VR_correlogram(double *xp, double *yp, int *nint, double *x,
+	       double *y, double *z, int *n, int *cnt)
 {
     double xd, yd, d, sc, zb, xm, var, sum;
     int   i, j, i1, ibin;
@@ -602,8 +602,8 @@ VR_correlogram(Sfloat *xp, Sfloat *yp, Sint *nint, double *x,
    for the NINT intervals based on the NCP observations in each interval.
    XM defines the upper limit on the x axis. */
 
-    cp = Calloc(*nint + 1, double);
-    ncp = Calloc(*nint + 1, int);
+    cp = R_Calloc(*nint + 1, double);
+    ncp = R_Calloc(*nint + 1, int);
     zb = 0.0;
     for (i = 0; i < *n; ++i) {
 	zb += z[i];
@@ -650,13 +650,13 @@ VR_correlogram(Sfloat *xp, Sfloat *yp, Sint *nint, double *x,
 	}
     }
     *nint = i1;
-    Free(cp);
-    Free(ncp);
+    R_Free(cp);
+    R_Free(ncp);
 }
 
 void
-VR_variogram(Sfloat *xp, Sfloat *yp, Sint *nint, double *x,
-	     double *y, double *z, Sint *n, Sint *cnt)
+VR_variogram(double *xp, double  *yp, int *nint, double *x,
+	     double *y, double *z, int *n, int *cnt)
 {
     double xd, yd, d, sc, xm;
 
@@ -669,8 +669,8 @@ VR_variogram(Sfloat *xp, Sfloat *yp, Sint *nint, double *x,
     in each interval.
  */
 
-    sv = Calloc(*nint + 1, double);
-    nsv = Calloc(*nint + 1, int);
+    sv = R_Calloc(*nint + 1, double);
+    nsv = R_Calloc(*nint + 1, int);
     for (i = 0; i < *nint; ++i) {
 	nsv[i] = 0;
 	sv[i] = 0.0;
@@ -706,6 +706,6 @@ VR_variogram(Sfloat *xp, Sfloat *yp, Sint *nint, double *x,
 	}
     }
     *nint = i1;
-    Free(sv);
-    Free(nsv);
+    R_Free(sv);
+    R_Free(nsv);
 }

@@ -1,3 +1,31 @@
+r-cran-spatial (7.3-17-1) unstable; urgency=medium
+
+  * New upstream release
+
+  * debian/control: Set (Build-)Depends: to current R version
+  * debian/control: Switch to virtual debhelper-compat (= 13)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 23 Jul 2023 09:12:36 -0500
+
+r-cran-spatial (7.3-16-1) unstable; urgency=medium
+
+  * New upstream release
+
+  * debian/control: Set (Build-)Depends: to current R version
+  * debian/control: Set Standards-Version: to current version 
+  * debian/control: Switch to virtual debhelper-compat (= 12)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon, 23 Jan 2023 07:06:32 -0600
+
+r-cran-spatial (7.3-15-1) unstable; urgency=medium
+
+  * New upstream release
+  
+  * debian/control: Set Build-Depends: to current R version
+  * debian/control: Set Standards-Version: to current version
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Thu, 13 Jan 2022 08:27:40 -0600
+
 r-cran-spatial (7.3-14-2) unstable; urgency=medium
 
   * Simple rebuild for unstable following Debian 11 release
